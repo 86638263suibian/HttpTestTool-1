@@ -6,6 +6,8 @@ using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace HttpTestTool
@@ -35,22 +37,26 @@ namespace HttpTestTool
             var data = txtEdit_data.EditValue + "";
 
             // 
-            if (method == Method.GET)
+            if (!String.IsNullOrEmpty(data))
             {
-                IDictionary<String, String> dic = new Dictionary<String, String>();
-                getQSParametersFromJObject(JsonConvert.DeserializeObject<JContainer>(data), ref dic);
-                if (0 < dic.Count)
+                if (method == Method.GET)
                 {
-                    foreach (var item in dic)
+                    IDictionary<String, String> dic = new Dictionary<String, String>();
+                    getQSParametersFromJObject(JsonConvert.DeserializeObject<JContainer>(data), ref dic);
+                    if (0 < dic.Count)
                     {
-                        request.AddQueryParameter(item.Key, item.Value);
+                        foreach (var item in dic)
+                        {
+                            request.AddQueryParameter(item.Key, item.Value);
+                        }
                     }
                 }
+                else
+                {
+                    request.AddJsonBody(JsonConvert.DeserializeObject<ExpandoObject>(data));
+                }
             }
-            else
-            {
-                request.AddJsonBody(JsonConvert.DeserializeObject<ExpandoObject>(data));
-            }
+
 
             // 
             var response = client.Execute(request);
@@ -74,44 +80,65 @@ namespace HttpTestTool
             {
                 if (item is JValue)
                 {
-                    var path = item.Path;
-                    if (item.Parent is JArray)
-                    {
-                        path = String.Format("{0}.[]", path.Substring(0, path.LastIndexOf("[")));
-                    }
-
-                    // 
-                    var arr = path.Split('.');
-                    var key = arr[0];
-                    var length = arr.Length;
-                    if (1 < length)
-                    {
-                        for (var i = 1; i < length; i++)
-                        {
-                            var index = arr[i].IndexOf("[");
-                            if (-1 == index)
-                            {
-                                key += String.Format("[{0}]", arr[i]);
-                            }
-                            else if (0 == index)
-                            {
-                                key += arr[i];
-                            }
-                            else
-                            {
-                                key += "[" + arr[i].Insert(index, "]");
-                            }
-                        }
-                    }
-
-                    // 
-                    dic.Add(key, (item as JValue).Value + "");
+                    dic.Add(getPath(item), (item as JValue).Value + "");
                 }
                 else
                 {
                     getQSParametersFromJObject(item, ref dic);
                 }
             }
+        }
+
+        private string getPath(JToken token)
+        {
+            if (token.Parent == null)
+            {
+                return string.Empty;
+            }
+
+            IList<JToken> ancestors = token.Ancestors().Reverse().ToList();
+            ancestors.Add(token);
+
+            var count = ancestors.Count;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < count; i++)
+            {
+                JToken current = ancestors[i];
+                JToken next = null;
+                if (i + 1 < ancestors.Count)
+                {
+                    next = ancestors[i + 1];
+                }
+                else if (ancestors[i].Type == JTokenType.Property)
+                {
+                    next = ancestors[i];
+                }
+
+                if (next != null)
+                {
+                    switch (current.Type)
+                    {
+                        case JTokenType.Property:
+                            var property = current as JProperty;
+                            if (sb.Length <= 0)
+                            {
+                                sb.Append(property.Name);
+                            }
+                            else
+                            {
+                                sb.Append("[").Append(property.Name).Append("]");
+                            }
+                            break;
+                        case JTokenType.Array:
+                        case JTokenType.Constructor:
+                            sb.Append("[").Append((current as IList<JToken>).IndexOf(next)).Append("]");
+                            break;
+                    }
+                }
+            }
+
+            // 
+            return sb.ToString();
         }
 
         private void AppendNodes(JToken token, string name, TreeListNode parent)
