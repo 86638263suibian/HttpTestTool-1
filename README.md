@@ -1,4 +1,4 @@
 HttpTestTool
 ============
 
-simple http test tool
+Simple http test tool
