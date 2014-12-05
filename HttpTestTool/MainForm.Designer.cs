@@ -126,6 +126,7 @@
             this.radioGroup_method.EditValue = RestSharp.Method.GET;
             this.radioGroup_method.Location = new System.Drawing.Point(64, 12);
             this.radioGroup_method.Name = "radioGroup_method";
+            this.radioGroup_method.Properties.AllowMouseWheel = false;
             this.radioGroup_method.Properties.Columns = 4;
             this.radioGroup_method.Properties.Items.AddRange(new DevExpress.XtraEditors.Controls.RadioGroupItem[] {
             new DevExpress.XtraEditors.Controls.RadioGroupItem(RestSharp.Method.GET, "GET"),
