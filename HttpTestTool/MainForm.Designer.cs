@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.layout = new DevExpress.XtraLayout.LayoutControl();
             this.txtEdit_url = new DevExpress.XtraEditors.TextEdit();
             this.treeList_response = new DevExpress.XtraTreeList.TreeList();
@@ -42,6 +43,7 @@
             this.layoutControlItem4 = new DevExpress.XtraLayout.LayoutControlItem();
             this.splitterItem1 = new DevExpress.XtraLayout.SplitterItem();
             this.layoutControlItem2 = new DevExpress.XtraLayout.LayoutControlItem();
+            this.dxValidationProvider = new DevExpress.XtraEditors.DXErrorProvider.DXValidationProvider(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.layout)).BeginInit();
             this.layout.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txtEdit_url.Properties)).BeginInit();
@@ -55,6 +57,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.layoutControlItem4)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitterItem1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.layoutControlItem2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dxValidationProvider)).BeginInit();
             this.SuspendLayout();
             // 
             // layout
@@ -144,7 +147,6 @@
             this.txtEdit_data.Size = new System.Drawing.Size(610, 73);
             this.txtEdit_data.StyleController = this.layout;
             this.txtEdit_data.TabIndex = 6;
-            this.txtEdit_data.UseOptimizedRendering = true;
             // 
             // layoutControlGroup1
             // 
@@ -226,11 +228,16 @@
             this.layoutControlItem2.Text = "url";
             this.layoutControlItem2.TextSize = new System.Drawing.Size(49, 14);
             // 
+            // dxValidationProvider
+            // 
+            this.dxValidationProvider.ValidationMode = DevExpress.XtraEditors.DXErrorProvider.ValidationMode.Auto;
+            // 
             // MainForm
             // 
             this.AcceptButton = this.btn_send;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 14F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoValidate = System.Windows.Forms.AutoValidate.EnableAllowFocusChange;
             this.ClientSize = new System.Drawing.Size(686, 415);
             this.Controls.Add(this.layout);
             this.Name = "MainForm";
@@ -249,6 +256,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.layoutControlItem4)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitterItem1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.layoutControlItem2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dxValidationProvider)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -269,6 +277,7 @@
         private DevExpress.XtraEditors.TextEdit txtEdit_url;
         private DevExpress.XtraLayout.LayoutControlItem layoutControlItem2;
         private DevExpress.XtraTreeList.Columns.TreeListColumn colData;
+        private DevExpress.XtraEditors.DXErrorProvider.DXValidationProvider dxValidationProvider;
 
     }
 }

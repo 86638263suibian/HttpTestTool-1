@@ -1,4 +1,5 @@
 ﻿using DevExpress.XtraEditors;
+using DevExpress.XtraEditors.DXErrorProvider;
 using DevExpress.XtraTreeList.Nodes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -17,12 +18,57 @@ namespace HttpTestTool
         public MainForm()
         {
             InitializeComponent();
+
+            // init validation rules
+            // txtEdit_url
+            UrlValidationRule urlValidationRule = new UrlValidationRule();
+            urlValidationRule.ErrorText = "Please enter a valid url";
+            urlValidationRule.ErrorType = ErrorType.Default;
+            dxValidationProvider.SetValidationRule(txtEdit_url, urlValidationRule);
+
+            // txtEdit_data
+            DataValidationRule dataValidationRule = new DataValidationRule();
+            dataValidationRule.ErrorText = "Please enter a valid json string";
+            dataValidationRule.ErrorType = ErrorType.Default;
+            dxValidationProvider.SetValidationRule(txtEdit_data, dataValidationRule);
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
             layout.BestFit();
         }
+
+        #region CustomValidationRule
+        public class UrlValidationRule : ValidationRule
+        {
+            public override bool Validate(Control control, object value)
+            {
+                string str = value + "";
+                return !String.IsNullOrWhiteSpace(str) && Uri.IsWellFormedUriString(str, UriKind.Absolute);
+            }
+        }
+
+        public class DataValidationRule : ValidationRule
+        {
+            public override bool Validate(Control control, object value)
+            {
+                string str = value + "";
+                bool res = true;
+                if (!String.IsNullOrWhiteSpace(str))
+                {
+                    try
+                    {
+                        JObject.Parse(str);
+                    }
+                    catch (Exception)
+                    {
+                        res = false;
+                    }
+                }
+                return res;
+            }
+        }
+        #endregion
 
         /// <summary>
         /// send http request
@@ -31,13 +77,16 @@ namespace HttpTestTool
         /// <param name="e"></param>
         private void btn_send_Click(object sender, EventArgs e)
         {
+            // validate
+            if (!dxValidationProvider.Validate()) return;
+
+            // 
             var method = (Method)radioGroup_method.Properties.Items[radioGroup_method.SelectedIndex].Value;
             var request = new RestRequest(method);
-            var client = new RestClient(txtEdit_url.EditValue + "");
             var data = txtEdit_data.EditValue + "";
 
             // 
-            if (!String.IsNullOrEmpty(data))
+            if (!String.IsNullOrWhiteSpace(data))
             {
                 if (method == Method.GET)
                 {
@@ -45,10 +94,7 @@ namespace HttpTestTool
                     getQSParametersFromJObject(JsonConvert.DeserializeObject<JContainer>(data), ref dic);
                     if (0 < dic.Count)
                     {
-                        foreach (var item in dic)
-                        {
-                            request.AddQueryParameter(item.Key, item.Value);
-                        }
+                        Array.ForEach(dic.ToArray(), (item) => request.AddQueryParameter(item.Key, item.Value));
                     }
                 }
                 else
@@ -58,20 +104,31 @@ namespace HttpTestTool
             }
 
 
-            // 
-            var response = client.Execute(request);
-            treeList_response.BeginUnboundLoad();
-            try
+            // execute
+            var client = new RestClient(txtEdit_url.EditValue + "");
+            client.ExecuteAsync(request, (response) =>
             {
-                treeList_response.ClearNodes();
-                AppendNodes(JsonConvert.DeserializeObject<JContainer>(response.Content), null, null);
-            }
-            catch (Exception ex)
-            {
-                XtraMessageBox.Show(ex + "", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            treeList_response.EndUnboundLoad();
-            treeList_response.ExpandAll();
+                if (response.ResponseStatus != ResponseStatus.Completed)
+                {
+                    XtraMessageBox.Show(response.ErrorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // 
+                treeList_response.BeginUnboundLoad();
+                try
+                {
+                    treeList_response.ClearNodes();
+                    AppendNodes(JsonConvert.DeserializeObject<JContainer>(response.Content), null, null);
+                }
+                catch (Exception ex)
+                {
+                    XtraMessageBox.Show(ex.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                treeList_response.EndUnboundLoad();
+                treeList_response.ExpandAll();
+            });
+
         }
 
         private void getQSParametersFromJObject(JToken token, ref IDictionary<String, String> dic)
