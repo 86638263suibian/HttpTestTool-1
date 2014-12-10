@@ -103,32 +103,28 @@ namespace HttpTestTool
                 }
             }
 
-
             // execute
             var client = new RestClient(txtEdit_url.EditValue + "");
-            client.ExecuteAsync(request, (response) =>
+            var response = client.Execute(request);
+            if (response.ResponseStatus != ResponseStatus.Completed)
             {
-                if (response.ResponseStatus != ResponseStatus.Completed)
-                {
-                    XtraMessageBox.Show(response.ErrorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                XtraMessageBox.Show(response.ErrorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
-                // 
-                treeList_response.BeginUnboundLoad();
-                try
-                {
-                    treeList_response.ClearNodes();
-                    AppendNodes(JsonConvert.DeserializeObject<JContainer>(response.Content), null, null);
-                }
-                catch (Exception ex)
-                {
-                    XtraMessageBox.Show(ex.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-                treeList_response.EndUnboundLoad();
-                treeList_response.ExpandAll();
-            });
-
+            // 
+            treeList_response.BeginUnboundLoad();
+            try
+            {
+                treeList_response.ClearNodes();
+                AppendNodes(JsonConvert.DeserializeObject<JContainer>(response.Content), null, null);
+            }
+            catch (Exception ex)
+            {
+                XtraMessageBox.Show(ex.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            treeList_response.EndUnboundLoad();
+            treeList_response.ExpandAll();
         }
 
         private void getQSParametersFromJObject(JToken token, ref IDictionary<String, String> dic)
@@ -219,7 +215,6 @@ namespace HttpTestTool
                     {
                         AppendNodes(property.Value, property.Name, node);
                     }
-
                 }
                 else
                 {
